@@ -1,4 +1,4 @@
-pragma solidity 0.8.4;
+pragma solidity ^0.8.4;
 
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/interfaces/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 
-contract TokenSale is Ownable {
+contract ProjectRaise is Ownable {
     using SafeMath for uint256;
 
     /// @notice Emits when a backer pledges to the project

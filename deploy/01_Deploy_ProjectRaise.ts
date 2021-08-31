@@ -2,36 +2,36 @@ import { Signer } from "ethers";
 import { DeployFunction } from "hardhat-deploy/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
-import { TokenSale, TokenSale__factory } from "../typechain";
+import { ProjectRaise, ProjectRaise__factory } from "../typechain";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     let accounts: Signer[];
-    let tokenSaleContract: TokenSale;
+    let raiseContract: ProjectRaise;
 
     accounts = await hre.ethers.getSigners();
 
     console.log(await accounts[0].getAddress());
 
-    const saleFactory = (await hre.ethers.getContractFactory(
-        "TokenSale",
+    const raiseFactory = (await hre.ethers.getContractFactory(
+        "ProjectRaise",
         accounts[0]
-    )) as TokenSale__factory;
+    )) as ProjectRaise__factory;
 
-    tokenSaleContract = await saleFactory.deploy();
+    raiseContract = await raiseFactory.deploy();
 
     console.log(
-        `The address the Contract WILL have once mined: ${tokenSaleContract.address}`
+        `The address the Contract WILL have once mined: ${raiseContract.address}`
     );
 
     console.log(
-        `The transaction that was sent to the network to deploy the Contract: ${tokenSaleContract.deployTransaction.hash}`
+        `The transaction that was sent to the network to deploy the Contract: ${raiseContract.deployTransaction.hash}`
     );
 
     console.log(
         "The contract is NOT deployed yet; we must wait until it is mined..."
     );
 
-    await tokenSaleContract.deployed();
+    await raiseContract.deployed();
 
     console.log("Minted...");
 };
