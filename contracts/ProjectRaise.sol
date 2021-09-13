@@ -54,7 +54,7 @@ contract ProjectRaise is Ownable {
     mapping(address => uint256) public backings;
 
     /// Record of NFT tier rewards an address has received
-    mapping(address => BackerNFTReward[]) public tierRewards;
+    mapping(address => BackerNFTReward[]) public backerRewards;
 
     /// Total number of tokens backed
     uint256 public totalBackingAmount;
@@ -236,14 +236,14 @@ contract ProjectRaise is Ownable {
         require(allowance >= _amount, "backer has not given allowance to project to transfer funds");
         
         totalBackingAmount.add(_amount);
-        backings[msg.sender] = _amount;
+        backings[msg.sender] = backings[msg.sender].add(_amount);
 
         if (fundingAmountToTier[_amount].reward != address(0) &&
             fundingAmountToTier[_amount].maxBackers > fundingAmountToTier[_amount].currentBackers)
         {
             Tier reward = Tier(fundingAmountToTier[_amount].reward);
             uint256 tokenId = reward.mintTo(msg.sender);
-            tierRewards[msg.sender].push(BackerNFTReward(_amount, tokenId));
+            backerRewards[msg.sender].push(BackerNFTReward(_amount, tokenId));
         }
         usdToken.transferFrom(msg.sender, address(this), _amount);
         emit Back(msg.sender, _amount);
@@ -289,26 +289,26 @@ contract ProjectRaise is Ownable {
     function returnTierNFT(uint256 _amount) internal {
         if (_amount != 0) {
             bool burned = false;
-            for (uint16 i;i < tierRewards[msg.sender].length; i++) {
+            for (uint16 i;i < backerRewards[msg.sender].length; i++) {
                 if (burned == true) {
                     break;
                 }
 
-                if (_amount == tierRewards[msg.sender][i].tierAmount) {
+                if (_amount == backerRewards[msg.sender][i].tierAmount) {
                     Tier reward = Tier(fundingAmountToTier[_amount].reward);
-                    if (reward.ownerOf(tierRewards[msg.sender][i].tokenId) == msg.sender) {
-                        reward.burn(tierRewards[msg.sender][i].tokenId);
+                    if (reward.ownerOf(backerRewards[msg.sender][i].tokenId) == msg.sender) {
+                        reward.burn(backerRewards[msg.sender][i].tokenId);
                         burned = true;
                     }
                 }
             }
             require(burned == true, "Must have burned one NFT. Make sure to set amount = to a tier");
         } else {
-            for (uint16 i;i < tierRewards[msg.sender].length; i++) {
-                BackerNFTReward memory backingReward = tierRewards[msg.sender][i];
+            for (uint16 i;i < backerRewards[msg.sender].length; i++) {
+                BackerNFTReward memory backingReward = backerRewards[msg.sender][i];
                 Tier reward = Tier(fundingAmountToTier[backingReward.tierAmount].reward);
-                require(reward.ownerOf(tierRewards[msg.sender][i].tokenId) == msg.sender, "If withdrawing all, you must own all NFTs");
-                reward.burn(tierRewards[msg.sender][i].tokenId);
+                require(reward.ownerOf(backerRewards[msg.sender][i].tokenId) == msg.sender, "If withdrawing all, you must own all NFTs");
+                reward.burn(backerRewards[msg.sender][i].tokenId);
             }
         }
     }
@@ -337,6 +337,10 @@ contract ProjectRaise is Ownable {
         usdToken.transfer(msg.sender, refundAmount);
         emit Refund(msg.sender, refundAmount);
     }
+
+    function getBackerRewards(address _account) public view returns(BackerNFTReward[] memory rewards) {
+        return backerRewards[_account];
+    } 
 
     function getAddressBacking(address _account) public view returns(uint256 balance) {
         return backings[_account];
