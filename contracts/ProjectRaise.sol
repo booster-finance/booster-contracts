@@ -148,7 +148,7 @@ contract ProjectRaise is Ownable {
             sumMilestoneReleasePercent += _milestoneReleasePercents[i];
             prevMilestoneReleaseDate = _milestoneReleaseDates[i];
         }
-        require(sumMilestoneReleasePercent == 1, "must eventually release all the funds to the creator");
+        require(sumMilestoneReleasePercent == 100, "must eventually release all the funds to the creator");
     }
 
     /// @dev Require that the modified function is only called by `creator`
@@ -216,7 +216,7 @@ contract ProjectRaise is Ownable {
         require(milestones[currentMilestone].releaseDate >= block.timestamp, "can only be called after funding round is over");
         if (totalBackingAmount >= fundingGoal) {
             currentStatus = Status.FUNDED;
-            withdrawableFunds += milestones[currentMilestone].releasePercent * totalBackingAmount;
+            withdrawableFunds += totalBackingAmount.mul(milestones[currentMilestone].releasePercent).div(100);
             cummulativeReleasePercent += milestones[currentMilestone].releasePercent;
             currentMilestone += 1;
         } else {
@@ -275,7 +275,7 @@ contract ProjectRaise is Ownable {
         if (cancelVoteCount > totalBackingAmount.div(2).add(1)) { 
             currentStatus = Status.CANCELLED;
         } else {
-            withdrawableFunds = withdrawableFunds.add(totalBackingAmount.mul(milestones[currentMilestone].releasePercent));
+            withdrawableFunds = withdrawableFunds.add(totalBackingAmount.mul(milestones[currentMilestone].releasePercent).div(100));
             cummulativeReleasePercent += milestones[currentMilestone].releasePercent;
             if (currentMilestone == milestones.length - 1) {
                 currentStatus == Status.FINISHED;
@@ -325,7 +325,7 @@ contract ProjectRaise is Ownable {
 
         
         // If this is called when project has started, will just equal full backings 
-        uint256 refundAmount = backings[msg.sender].mul(1 - cummulativeReleasePercent);
+        uint256 refundAmount = backings[msg.sender].mul(100 - cummulativeReleasePercent).div(100);
         if (currentStatus == Status.STARTED) {
             if (_amount != 0) {
                 refundAmount = _amount;
