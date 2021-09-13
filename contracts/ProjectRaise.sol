@@ -1,3 +1,14 @@
+/**
+    NOTE SEV:
+    First skimming over it, everything looks really well written and clean.
+    Kudos to you sir! Only had 2 remarks:
+
+    See 
+    + NOTE 1
+    + NOTE 2
+
+ */
+
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.4;
@@ -236,7 +247,30 @@ contract ProjectRaise is Ownable {
         require(allowance >= _amount, "backer has not given allowance to project to transfer funds");
         
         totalBackingAmount.add(_amount);
+
+        /*
+            NOTE 1 - SEV:
+            If the backer has already invested in the project the amount will be overwritten and 
+            the money already paid will remain in the contract with no owner.
+
+            I think that's not 'fair'.
+
+            Is it to complicated to do sth. like a:
+            mapping(address => mapping(tier => amount)) public backings;
+
+            Then one address could sign up for multiple tiers.
+            Otherwise I would suggest that the previous backing gets
+            paid out.
+        */
+
         backings[msg.sender] = _amount;
+
+        /*
+                NOTE 2 - SEV:
+                What if the _amount is not exactly any tier inside fundingAmountToTier.
+                E.g. sb used read/write inside the explorer to 'hack' himself in the project with
+                an unsupported amount. It would throw an exception and revert, right?
+        */
 
         if (fundingAmountToTier[_amount].reward != address(0) &&
             fundingAmountToTier[_amount].maxBackers > fundingAmountToTier[_amount].currentBackers)
