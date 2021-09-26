@@ -3,11 +3,11 @@ import { DeployFunction } from "hardhat-deploy/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { start } from "repl";
 
-import { ProjectRaise, ProjectRaise__factory } from "../typechain";
+import { ProjectFactory, ProjectFactory__factory } from "../typechain";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     let accounts: Signer[];
-    let raiseContract: ProjectRaise;
+    let factoryContract: ProjectFactory;
 
     // address _usdToken, address _creator, uint256 _fundingGoal, uint256 _startTime, uint256 _tokenURI,
     // uint256[] memory _milestoneReleaseDates, uint8[] memory _milestoneReleasePercents
@@ -37,28 +37,30 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const demoToken = await tokenFactory.deploy();
     await demoToken.deployed();
 
-    const raiseFactory = (await hre.ethers.getContractFactory(
-        "ProjectRaise",
+    const projectFactory = (await hre.ethers.getContractFactory(
+        "ProjectFactory",
         accounts[0]
-    )) as ProjectRaise__factory;
+    )) as ProjectFactory__factory;
 
-    raiseContract = await raiseFactory.deploy(demoToken.address, creator, hre.ethers.BigNumber.from('150000000'), hre.ethers.BigNumber.from(startTime),tokenURI, milestoneReleaseDates, milestoneReleasePercents);
+    factoryContract = await projectFactory.deploy();
 
     console.log(
-        `The address the Contract WILL have once mined: ${raiseContract.address}`
+        `The address the Contract WILL have once mined: ${factoryContract.address}`
     );
 
     console.log(
-        `The transaction that was sent to the network to deploy the Contract: ${raiseContract.deployTransaction.hash}`
+        `The transaction that was sent to the network to deploy the Contract: ${factoryContract.deployTransaction.hash}`
     );
 
     console.log(
         "The contract is NOT deployed yet; we must wait until it is mined..."
     );
 
-    await raiseContract.deployed();
+    await factoryContract.deployed();
 
     console.log("Minted...");
+
+    factoryContract.createProjectRaise(demoToken.address, creator, hre.ethers.BigNumber.from('150000000'), hre.ethers.BigNumber.from(startTime),tokenURI, milestoneReleaseDates, milestoneReleasePercents);
 };
 export default func;
 func.id = "deploy";

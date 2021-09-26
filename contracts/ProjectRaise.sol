@@ -3,14 +3,13 @@
 pragma solidity ^0.8.4;
 
 import "hardhat/console.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 import "./Tier/TierNFT.sol";
 
 
-contract ProjectRaise is Ownable {
+contract ProjectRaise {
     using SafeMath for uint256;
 
     /// @notice Emits when a backer backs to the project
@@ -69,10 +68,10 @@ contract ProjectRaise is Ownable {
     Status public currentStatus = Status.STARTED;
 
     // Current milestone of project, start at 0
-    uint8 public currentMilestone = 0;
+    uint8 public currentMilestone;
 
     // Keep track of funds that have already been allocated to creator, used for keeping track of how much a backer can get after each milestone
-    uint8 public cummulativeReleasePercent = 0;
+    uint8 public cummulativeReleasePercent;
 
     // Total amount of funds the creator is able to withdraw
     uint256 public withdrawableFunds;
