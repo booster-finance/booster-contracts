@@ -335,19 +335,23 @@ contract ProjectRaise {
             _fundingTiers[i] = fundingAmountToTier[fundingTiers[i]];
         }
         return _fundingTiers;
-    } 
+    }
+
+    function getMilestones() public view returns(Milestone[] memory) {
+        return milestones;
+    }
 
     function getBackerRewards(address _account) public view returns(BackerNFTReward[] memory rewards) {
         return backerInfoMapping[_account].rewards;
-    } 
+    }
 
     function getAddressBacking(address _account) public view returns(uint256 balance) {
         return backerInfoMapping[_account].amount;
-    } 
+    }
 
     function getCancelVote(address _account) public view returns(bool cancelVote) {
         return backerInfoMapping[_account].cancelVote;
-    } 
+    }
 
     function balanceOf() public view returns(uint256 balance) {
         return usdToken.balanceOf(address(this));
