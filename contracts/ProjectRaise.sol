@@ -3,37 +3,11 @@
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 import "./Tier/TierNFT.sol";
 
 
-contract ProjectRaise {
-    using SafeMath for uint256;
-
-    /// @notice Emits when a backer backs to the project
-    /// @param backer The address of the backer
-    /// @param amount The number of tokens backed
-    event Back(address indexed backer, uint256 amount);
-
-    /// @notice Emits when a backer receives a refund
-    /// @param backer The address of the refund recipient
-    /// @param amount The number of tokens refunded
-    event Refund(address indexed backer, uint256 amount);
-
-    /// @notice Emits when a creator withdraws funds
-    /// @param creator The address of the project creator
-    /// @param amount The number of tokens withdrawn
-    /// @param complete True if this is the final withdrawal
-    event CreatorWithdraw(address indexed creator, uint256 amount, bool complete);
-
-    /// @notice Emits when a backer votes to cancel the project or not
-    /// @param backer The address of the project creator
-    /// @param amount The value of the vote
-    /// @param vote True if they voted to cancel the project
-    event BackerVote(address indexed backer, uint256 amount, bool vote);
-
-    /// The ERC20 token used to fund the project
+contract ProjectRaise {/// The ERC20 token used to fund the project
     IERC20 public usdToken;
 
     /// The address of the project's creator
@@ -161,7 +135,6 @@ contract ProjectRaise {
         uint256 temp = withdrawableFunds;
         withdrawableFunds = 0;  
         usdToken.transfer(creator, temp);
-        emit CreatorWithdraw(creator, temp, true);
     }
 
     /// @notice Creator function to cancel project
@@ -185,7 +158,6 @@ contract ProjectRaise {
         require(currentStatus == Status.STARTED, "!started");
         require(block.timestamp < startTime, "now > started");
 
-        require(_tierAmounts.length <= 10, "> 10 tiers");
         require(_tierAmounts.length == _tierRewards.length, "!length");
         require(_tierRewards.length == _maxBackers.length, "!length");
 
@@ -205,7 +177,7 @@ contract ProjectRaise {
         require(milestones[currentMilestone].releaseDate >= block.timestamp, "now < milestone");
         if (totalBackingAmount >= fundingGoal) {
             currentStatus = Status.FUNDED;
-            withdrawableFunds += totalBackingAmount.mul(milestones[currentMilestone].releasePercent).div(100);
+            withdrawableFunds += totalBackingAmount * milestones[currentMilestone].releasePercent / 100;
             cummulativeReleasePercent += milestones[currentMilestone].releasePercent;
             currentMilestone += 1;
         } else {
@@ -225,8 +197,8 @@ contract ProjectRaise {
         uint256 allowance = usdToken.allowance(msg.sender, address(this));
         require(allowance >= _amount, "!backer");
         
-        totalBackingAmount.add(_amount);
-        backerInfoMapping[msg.sender].amount = backerInfoMapping[msg.sender].amount.add(_amount);
+        totalBackingAmount = totalBackingAmount + _amount;
+        backerInfoMapping[msg.sender].amount = backerInfoMapping[msg.sender].amount + _amount;
 
         if (fundingAmountToTier[_amount].reward != address(0) &&
             fundingAmountToTier[_amount].maxBackers > fundingAmountToTier[_amount].currentBackers)
@@ -236,7 +208,6 @@ contract ProjectRaise {
             backerInfoMapping[msg.sender].rewards.push(BackerNFTReward(_amount, tokenId));
         }
         usdToken.transferFrom(msg.sender, address(this), _amount);
-        emit Back(msg.sender, _amount);
     }
 
     /// @notice Milestone vote by backers. Backers are assumed "n/a" by default and do not affect milestone checks
@@ -248,14 +219,13 @@ contract ProjectRaise {
         require(backerInfoMapping[msg.sender].amount > 0, "!backer");
         if (backerInfoMapping[msg.sender].cancelVote == false && _cancelVote == true) {
             backerInfoMapping[msg.sender].cancelVote = true;
-            cancelVoteCount.add(backerInfoMapping[msg.sender].amount);
+            cancelVoteCount = cancelVoteCount + backerInfoMapping[msg.sender].amount;
         } else if (backerInfoMapping[msg.sender].cancelVote == true && _cancelVote == false) {
             backerInfoMapping[msg.sender].cancelVote = false;
-            cancelVoteCount.sub(backerInfoMapping[msg.sender].amount);
+            cancelVoteCount = cancelVoteCount - backerInfoMapping[msg.sender].amount;
         } else {
             revert("vote=prev");
         }
-        emit BackerVote(msg.sender, backerInfoMapping[msg.sender].amount, _cancelVote);
     }
 
     /// @notice Milestone check, can be called by anyone. If not enough voters against, moves on to next milestone
@@ -264,10 +234,10 @@ contract ProjectRaise {
     function milestoneCheck() external {
         require(currentStatus == Status.FUNDED, "!funded");
         require(block.timestamp >= milestones[currentMilestone].releaseDate, "now < milestone");
-        if (cancelVoteCount > totalBackingAmount.div(2).add(1)) { 
+        if (cancelVoteCount > (totalBackingAmount / 2) + 1) { 
             currentStatus = Status.CANCELLED;
         } else {
-            withdrawableFunds = withdrawableFunds.add(totalBackingAmount.mul(milestones[currentMilestone].releasePercent).div(100));
+            withdrawableFunds = withdrawableFunds + totalBackingAmount * (milestones[currentMilestone].releasePercent / 100);
             cummulativeReleasePercent += milestones[currentMilestone].releasePercent;
             if (currentMilestone == milestones.length - 1) {
                 currentStatus = Status.FINISHED;
@@ -281,7 +251,7 @@ contract ProjectRaise {
     function returnTierNFT(uint256 _amount) internal {
         if (_amount != 0) {
             bool burned = false;
-            for (uint16 i;i < backerInfoMapping[msg.sender].amount; i++) {
+            for (uint16 i;i < backerInfoMapping[msg.sender].rewards.length; i++) {
                 if (burned == true) {
                     break;
                 }
@@ -290,6 +260,7 @@ contract ProjectRaise {
                     Tier reward = Tier(fundingAmountToTier[_amount].reward);
                     if (reward.ownerOf(backerInfoMapping[msg.sender].rewards[i].tokenId) == msg.sender) {
                         reward.burn(backerInfoMapping[msg.sender].rewards[i].tokenId);
+                        delete backerInfoMapping[msg.sender].rewards[i];
                         burned = true;
                     }
                 }
@@ -301,6 +272,7 @@ contract ProjectRaise {
                 Tier reward = Tier(fundingAmountToTier[backingReward.tierAmount].reward);
                 require(reward.ownerOf(backerInfoMapping[msg.sender].rewards[i].tokenId) == msg.sender, "!NFT ownership");
                 reward.burn(backerInfoMapping[msg.sender].rewards[i].tokenId);
+                delete backerInfoMapping[msg.sender].rewards[i];
             }
         }
     }
@@ -316,25 +288,26 @@ contract ProjectRaise {
 
         
         // If this is called when project has started, will just equal full backings 
-        uint256 refundAmount = backerInfoMapping[msg.sender].amount.mul(100 - cummulativeReleasePercent).div(100);
+        uint256 refundAmount = (backerInfoMapping[msg.sender].amount * 100) - (cummulativeReleasePercent / 100);
         if (currentStatus == Status.STARTED) {
             if (_amount != 0) {
                 refundAmount = _amount;
             }
             returnTierNFT(_amount);
-            totalBackingAmount = totalBackingAmount.sub(refundAmount);
+            totalBackingAmount = totalBackingAmount - refundAmount;
             backerInfoMapping[msg.sender].amount = 0;
         }
         usdToken.transfer(msg.sender, refundAmount);
-        emit Refund(msg.sender, refundAmount);
     }
 
-    function getFundingTiers() public view returns(FundingTier[] memory tiers) {
+    function getFundingTiers() public view returns(FundingTier[] memory tiers, uint256[] memory values) {
         FundingTier[] memory _fundingTiers = new FundingTier[](fundingTiers.length);
+        uint256[] memory _values = new uint256[](fundingTiers.length);
         for (uint8 i;i < fundingTiers.length; i++) {
             _fundingTiers[i] = fundingAmountToTier[fundingTiers[i]];
+            _values[i] = fundingTiers[i];
         }
-        return _fundingTiers;
+        return (_fundingTiers, _values);
     }
 
     function getMilestones() public view returns(Milestone[] memory) {
