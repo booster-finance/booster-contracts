@@ -12,7 +12,7 @@ contract ProjectFactory {
         address _creator,
         uint256 _fundingGoal,
         uint256 _startTime,
-        uint256 _tokenURI,
+        string memory _tokenURI,
         uint256[] memory _milestoneReleaseDates,
         uint8[] memory _milestoneReleasePercents) external
         returns (address)

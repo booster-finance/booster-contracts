@@ -28,7 +28,7 @@ describe("BASIC TEST", function () {
         // const userSigner = await ethers.getSigner(normalUser);
         const releaseDates = ["1636869214947", "1638869214947", "1642869214947"];
         const releasePercents = ["40", "30", "30"];
-        await factoryInstance.createProjectRaise("0xe548bf086b4baa6c8a5ca63ac55c79f5b9af25f7", accounts[0], "100", "1633869214947", "0", releaseDates, releasePercents);
+        await factoryInstance.createProjectRaise("0xe548bf086b4baa6c8a5ca63ac55c79f5b9af25f7", accounts[0], "100", "1633869214947", "test", releaseDates, releasePercents);
 
         let projects = await factoryInstance.getProjects();
     });

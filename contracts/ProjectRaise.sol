@@ -46,7 +46,7 @@ contract ProjectRaise {
     uint256 public startTime;
 
     /// IPFS pointer of project details
-    uint256 public tokenURI;
+    string public tokenURI;
 
     /// Record of backings that have been made to the project
     mapping(address => BackerInfo) private backerInfoMapping;
@@ -127,7 +127,7 @@ contract ProjectRaise {
     /// @param _tokenURI Pointer to IPFS storage of project details
     /// @param _milestoneReleaseDates Times we we want each milestone to RELEASE FUNDS on. The first release is actually the end date of when funds can be given to project
     /// @param _milestoneReleasePercents Corresponding percentage of total funds each milestone will release to creator
-    constructor(address _usdToken, address _creator, uint256 _fundingGoal, uint256 _startTime, uint256 _tokenURI,
+    constructor(address _usdToken, address _creator, uint256 _fundingGoal, uint256 _startTime, string memory _tokenURI,
                         uint256[] memory _milestoneReleaseDates, uint8[] memory _milestoneReleasePercents) {
 
         require(_startTime > block.timestamp, "start < now");
