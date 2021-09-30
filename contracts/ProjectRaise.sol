@@ -106,7 +106,7 @@ contract ProjectRaise {/// The ERC20 token used to fund the project
 
         require(_startTime > block.timestamp, "start < now");
         require(_creator != address(0), "null address");
-        require(_milestoneReleaseDates.length == _milestoneReleasePercents.length, "lengtb");
+        require(_milestoneReleaseDates.length == _milestoneReleasePercents.length, "length");
         usdToken = IERC20(_usdToken);
         creator = _creator;
         fundingGoal = _fundingGoal;
@@ -174,7 +174,7 @@ contract ProjectRaise {/// The ERC20 token used to fund the project
     /// @notice Special function for checking the successful completion of raise
     function checkFundingSuccess() external {
         require(currentStatus == Status.STARTED && startTime <= block.timestamp, "!started");
-        require(milestones[currentMilestone].releaseDate >= block.timestamp, "now < milestone");
+        require(milestones[currentMilestone].releaseDate < block.timestamp, "now < milestone");
         if (totalBackingAmount >= fundingGoal) {
             currentStatus = Status.FUNDED;
             withdrawableFunds += totalBackingAmount * milestones[currentMilestone].releasePercent / 100;
@@ -237,7 +237,7 @@ contract ProjectRaise {/// The ERC20 token used to fund the project
         if (cancelVoteCount > (totalBackingAmount / 2) + 1) { 
             currentStatus = Status.CANCELLED;
         } else {
-            withdrawableFunds = withdrawableFunds + totalBackingAmount * (milestones[currentMilestone].releasePercent / 100);
+            withdrawableFunds += totalBackingAmount * milestones[currentMilestone].releasePercent / 100;
             cummulativeReleasePercent += milestones[currentMilestone].releasePercent;
             if (currentMilestone == milestones.length - 1) {
                 currentStatus = Status.FINISHED;
