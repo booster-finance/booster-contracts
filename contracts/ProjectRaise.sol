@@ -286,9 +286,8 @@ contract ProjectRaise {/// The ERC20 token used to fund the project
         require(currentStatus == Status.STARTED || currentStatus == Status.CANCELLED, "!started || !cancelled");
         require(backerInfoMapping[msg.sender].amount > 0, "!backer");
 
-        
         // If this is called when project has started, will just equal full backings 
-        uint256 refundAmount = (backerInfoMapping[msg.sender].amount * 100) - (cummulativeReleasePercent / 100);
+        uint256 refundAmount = backerInfoMapping[msg.sender].amount - (backerInfoMapping[msg.sender].amount * cummulativeReleasePercent / 100);
         if (currentStatus == Status.STARTED) {
             if (_amount != 0) {
                 refundAmount = _amount;
